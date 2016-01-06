@@ -132,39 +132,44 @@ def get_datetime_from_str(input_str):
 # In[ ]:
 
 def run(conf):
-    last_http_day_str = get_last_http_result(conf['input_everyday_index_data_path'])
-    last_index_day_str = get_last_index_result(conf['output_index_file_name'])
-    last_stock_day_str = get_last_stock_result(conf['output_stock_file_name'])
-    
-    last_http_day = last_http_day_str.split(',')[0]
-    last_index_day = last_index_day_str.split(',')[0]
-    last_stock_day = last_stock_day_str.split(',')[0].split(' ')[0]
-    print 'http     last day is ' + last_http_day
-    print 'index    last day is '  + last_index_day 
-    print 'stock    last day is '  + last_stock_day 
-    
-    dt_http_day  = get_datetime_from_str(last_http_day)
-    dt_index_day = get_datetime_from_str(last_index_day)
-    dt_stock_day = get_datetime_from_str(last_stock_day)
     dt_today = datetime.datetime.today()
-    interval_http = (dt_today - dt_http_day).days
-    interval_index = (dt_today - dt_index_day).days
-    interval_stock = (dt_today - dt_stock_day).days
-    print interval_http,interval_index,interval_stock
-    week_day = dt_today.weekday()
-    print week_day
     log_msg = '<font color="red">MAYBE HAVE SOME ERROR,PLEASE CHECK</font>'
-    if(interval_http == 0 and interval_index == 0 and interval_stock == 0):
-        log_msg = "OK.  NOW IS WORKDAY"
-    elif (week_day == 5 or week_day == 6):
-        if(week_day == 5 and interval_http == 1 and interval_index == 1 and interval_stock == 1):   
-            log_msg = "OK.  NOW IS SATURDAY"
-        if(week_day == 6 and interval_http == 2 and interval_index == 2 and interval_stock == 2):   
-            log_msg = "OK.  NOW IS SUNDAY"   
+    if(dt_today.hour < 19):
+        log_msg = '<font color="red">Please run after 20 hours every evening</font>'
     else:
-        log_msg = '<font color="red">MAYBE HAVE SOME ERROR,PLEASE CHECK</font>'
-    
-    print dt_http_day,dt_index_day,dt_stock_day,dt_today
+        last_http_day_str = get_last_http_result(conf['input_everyday_index_data_path'])
+        last_index_day_str = get_last_index_result(conf['output_index_file_name'])
+        last_stock_day_str = get_last_stock_result(conf['output_stock_file_name'])
+
+        last_http_day = last_http_day_str.split(',')[0]
+        last_index_day = last_index_day_str.split(',')[0]
+        last_stock_day = last_stock_day_str.split(',')[0].split(' ')[0]
+        print 'http     last day is ' + last_http_day
+        print 'index    last day is '  + last_index_day 
+        print 'stock    last day is '  + last_stock_day 
+
+        dt_http_day  = get_datetime_from_str(last_http_day)
+        dt_index_day = get_datetime_from_str(last_index_day)
+        dt_stock_day = get_datetime_from_str(last_stock_day)
+        #
+        interval_http = (dt_today - dt_http_day).days
+        interval_index = (dt_today - dt_index_day).days
+        interval_stock = (dt_today - dt_stock_day).days
+        print interval_http,interval_index,interval_stock
+        week_day = dt_today.weekday()
+        print week_day
+
+        if(interval_http == 0 and interval_index == 0 and interval_stock == 0):
+            log_msg = "OK.  NOW IS WORKDAY"
+        elif (week_day == 5 or week_day == 6):
+            if(week_day == 5 and interval_http == 1 and interval_index == 1 and interval_stock == 1):   
+                log_msg = "OK.  NOW IS SATURDAY"
+            if(week_day == 6 and interval_http == 2 and interval_index == 2 and interval_stock == 2):   
+                log_msg = "OK.  NOW IS SUNDAY"   
+        else:
+            log_msg = '<font color="red">MAYBE HAVE SOME ERROR,PLEASE CHECK</font>'
+
+        print dt_http_day,dt_index_day,dt_stock_day,dt_today
     write_log_to_file(conf['output_log_file_path'],conf['output_log_type'],log_msg)
     write_log_to_db(conf['mysql_host'],conf['mysql_port'],conf['mysql_user'],conf['mysql_passwd'],conf['mysql_db_name'],conf['output_log_type'],log_msg)
     
