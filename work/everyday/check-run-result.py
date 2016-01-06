@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import os
 import datetime  
+import time
 np.set_printoptions(precision=4)
 import sys; 
 import MySQLdb;
@@ -87,11 +88,11 @@ def get_last_stock_result(stock_macd_file_name):
 # In[ ]:
 
 # 将结果写入文件
-def write_log_to_file(output_log_file_path,output_log_type,last_http_day,last_index_day,last_stock_day,):
+def write_log_to_file(output_log_file_path,output_log_type,msg):
     cur_day,cur_day_str,cur_day_trim_str,cur_minute = get_cur_day()
     log_file = output_log_file_path + cur_day_str + ".log";
     with open(log_file,'a') as handle:
-        handle.writelines(str(output_log_type) + "," + str(last_http_day) + "," + str(last_index_day) + "," + str(last_stock_day) + "\n")
+        handle.writelines(str(output_log_type) + ":" + str(msg) + "\n")
         handle.close()
 
 
@@ -99,14 +100,13 @@ def write_log_to_file(output_log_file_path,output_log_type,last_http_day,last_in
 
 #将结果写入数据库
 # 打开数据库连接
-def write_log_to_db(mysql_host,mysql_port,mysql_user,mysql_passwd,mysql_db_name,output_log_type,last_http_day,last_index_day,last_stock_day,):
+def write_log_to_db(mysql_host,mysql_port,mysql_user,mysql_passwd,mysql_db_name,output_log_type,log_msg):
     db = MySQLdb.connect(mysql_host,mysql_user,mysql_passwd,mysql_db_name )
     # 使用cursor()方法获取操作游标 
     cursor = db.cursor()
     # SQL 插入语句
-    log_msg = 'http day is ' + last_http_day + ',index day is '  + last_index_day + ',stock day is '  + last_stock_day 
     cur_day,cur_day_str,cur_day_trim_str,cur_minute = get_cur_day()
-    sql = "INSERT INTO AT_LOG(LX,LOG_TIME,LOG_MSG) VALUES ('%d', '%s', '%s' )" % (output_log_type, cur_minute, log_msg)
+    sql = "INSERT INTO AT_LOG(LX,LOG_TIME,LOG_MSG) VALUES ('%d', '%s', '%s' )" % (output_log_type, cur_minute, str(log_msg))
     print sql
     try:
        # 执行sql语句
@@ -122,15 +122,51 @@ def write_log_to_db(mysql_host,mysql_port,mysql_user,mysql_passwd,mysql_db_name,
 
 # In[ ]:
 
+#传入 String 得到 datetime 
+def get_datetime_from_str(input_str):
+    time_day = time.strptime(input_str, '%Y-%m-%d')
+    dt_day = datetime.datetime(*time_day[:6])
+    return dt_day
+
+
+# In[ ]:
+
 def run(conf):
-    last_http_day = get_last_http_result(conf['input_everyday_index_data_path'])
-    last_index_day = get_last_index_result(conf['output_index_file_name'])
-    last_stock_day = get_last_stock_result(conf['output_stock_file_name'])
+    last_http_day_str = get_last_http_result(conf['input_everyday_index_data_path'])
+    last_index_day_str = get_last_index_result(conf['output_index_file_name'])
+    last_stock_day_str = get_last_stock_result(conf['output_stock_file_name'])
+    
+    last_http_day = last_http_day_str.split(',')[0]
+    last_index_day = last_index_day_str.split(',')[0]
+    last_stock_day = last_stock_day_str.split(',')[0].split(' ')[0]
     print 'http     last day is ' + last_http_day
     print 'index    last day is '  + last_index_day 
     print 'stock    last day is '  + last_stock_day 
-    write_log_to_file(conf['output_log_file_path'],conf['output_log_type'],last_http_day,last_index_day,last_stock_day)
-    write_log_to_db(conf['mysql_host'],conf['mysql_port'],conf['mysql_user'],conf['mysql_passwd'],conf['mysql_db_name'],conf['output_log_type'],last_http_day,last_index_day,last_stock_day)
+    
+    dt_http_day  = get_datetime_from_str(last_http_day)
+    dt_index_day = get_datetime_from_str(last_index_day)
+    dt_stock_day = get_datetime_from_str(last_stock_day)
+    dt_today = datetime.datetime.today()
+    interval_http = (dt_today - dt_http_day).days
+    interval_index = (dt_today - dt_index_day).days
+    interval_stock = (dt_today - dt_stock_day).days
+    print interval_http,interval_index,interval_stock
+    week_day = dt_today.weekday()
+    print week_day
+    log_msg = '<font color="red">MAYBE HAVE SOME ERROR,PLEASE CHECK</font>'
+    if(interval_http == 0 and interval_index == 0 and interval_stock == 0):
+        log_msg = "OK.  NOW IS WORKDAY"
+    elif (week_day == 5 or week_day == 6):
+        if(week_day == 5 and interval_http == 1 and interval_index == 1 and interval_stock == 1):   
+            log_msg = "OK.  NOW IS SATURDAY"
+        if(week_day == 6 and interval_http == 2 and interval_index == 2 and interval_stock == 2):   
+            log_msg = "OK.  NOW IS SUNDAY"   
+    else:
+        log_msg = '<font color="red">MAYBE HAVE SOME ERROR,PLEASE CHECK</font>'
+    
+    print dt_http_day,dt_index_day,dt_stock_day,dt_today
+    write_log_to_file(conf['output_log_file_path'],conf['output_log_type'],log_msg)
+    write_log_to_db(conf['mysql_host'],conf['mysql_port'],conf['mysql_user'],conf['mysql_passwd'],conf['mysql_db_name'],conf['output_log_type'],log_msg)
     
 
 
