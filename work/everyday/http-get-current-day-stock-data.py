@@ -10,6 +10,7 @@ import urllib2
 import sys, httplib
 import os
 import zipfile  
+import datetime
 #%pwd
 
 
@@ -93,7 +94,15 @@ def get_url_data_and_unzip(url,out_path):
 # In[ ]:
 
 def run(conf):
+    starttime = datetime.datetime.now()
+    print "begin:",starttime
+    #############################################################################
     get_url_data_and_unzip(conf["everyday_stock_index_data_url"],conf["output_everyday_stock_index_data_path"])
+    #############################################################################
+    endtime = datetime.datetime.now()
+    print "end:",endtime
+    print "use(seconds):",str((endtime - starttime).seconds)
+    print "#############################################################################"
 
 
 # In[ ]:

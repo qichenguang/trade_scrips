@@ -132,6 +132,9 @@ def get_datetime_from_str(input_str):
 # In[ ]:
 
 def run(conf):
+    starttime = datetime.datetime.now()
+    print "begin:",starttime    
+    #############################################################################    
     dt_today = datetime.datetime.today()
     log_msg = '<font color="red">MAYBE HAVE SOME ERROR,PLEASE CHECK</font>'
     if(dt_today.hour < 19):
@@ -172,7 +175,11 @@ def run(conf):
         print dt_http_day,dt_index_day,dt_stock_day,dt_today
     write_log_to_file(conf['output_log_file_path'],conf['output_log_type'],log_msg)
     write_log_to_db(conf['mysql_host'],conf['mysql_port'],conf['mysql_user'],conf['mysql_passwd'],conf['mysql_db_name'],conf['output_log_type'],log_msg)
-    
+    #############################################################################
+    endtime = datetime.datetime.now()
+    print "end:",endtime
+    print "use(seconds):",str((endtime - starttime).seconds)     
+    print "#############################################################################"
 
 
 # In[ ]:

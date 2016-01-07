@@ -57,7 +57,7 @@ def get_every_days_index_data(index_everyday_csv_path,index_everyday_csv_name):
         if i>= 5:
             #break
             pass
-        print file_name
+        #print file_name
         # 从csv文件中读取该指数数据 
         # 注意：这里请填写数据文件在您电脑中的路径
         index_data = pd.read_csv(file_name,
@@ -107,7 +107,7 @@ def gen_from_begin_to_today_m26_data(index_base_csv_path,index_everyday_csv_path
         if i>= 5:
             #break
             pass
-        print index_code
+        #print index_code
         # 从csv文件中读取该股票数据 
         # 注意：这里请填写数据文件在您电脑中的路径
         index_data = pd.read_csv(index_base_csv_path + index_code + '.csv',
@@ -158,6 +158,9 @@ def get_today_index_m26_singnal_and_write_to_file(all_index,m26_index_code,m26_s
 # In[ ]:
 
 def run(conf):
+    starttime = datetime.datetime.now()
+    print "begin:",starttime
+    #############################################################################
     all_index = gen_from_begin_to_today_m26_data(conf['input_base_index_data_path'],conf['input_everyday_index_data_path'],conf['input_everyday_index_data_name'])
     last_day_str,last_index_m26_flag = get_today_index_m26_singnal_and_write_to_file(all_index,conf['m26_index_name'],conf['output_m26_singnal_file_name'])
     print last_day_str,last_index_m26_flag
@@ -167,6 +170,11 @@ def run(conf):
     # ========== 将算好的数据输出到csv文件 - 注意：这里请填写输出文件在您电脑中的路径
     # output CSV数据文件
     output.to_csv(conf['output_index_data_cvs_file_name'],encoding='gbk', index=False)
+    #############################################################################
+    endtime = datetime.datetime.now()
+    print "end:",endtime
+    print "use(seconds):",str((endtime - starttime).seconds)
+    print "#############################################################################"
 
 
 # In[ ]:

@@ -58,7 +58,7 @@ def get_every_days_stock_data(stock_everyday_csv_path,stock_everyday_csv_name):
         if i>= 5:
             #break
             pass
-        print file_name
+        #print file_name
         # 从csv文件中读取该股票数据 
         # 注意：这里请填写数据文件在您电脑中的路径
         stock_data = pd.read_csv(file_name,
@@ -112,7 +112,7 @@ def gen_new_stock_macd_data(new_stock_data):
     #
     new_stock_dict = dict(list(new_stock_data.groupby('code')))
     for code in new_stock_dict:
-        print code
+        #print code
         stock_data = new_stock_dict[code]
         #排序
         stock_data.sort_values(by='date', ascending=True,inplace=True)
@@ -148,7 +148,7 @@ def gen_from_begin_to_today_stock_macd_data(stock_base_csv_path,stock_everyday_c
         if i>= 5:
             #break
             pass
-        print code
+        #print code
         # 从csv文件中读取该股票数据 
         # 注意：这里请填写数据文件在您电脑中的路径
         stock_data = pd.read_csv(stock_base_csv_path + code + '.csv',
@@ -209,20 +209,37 @@ def get_today_macd_nums_and_write_to_file(all_stock,macd_num_file_name):
 # In[ ]:
 
 def run(conf):
+    starttime = datetime.datetime.now()
+    print "begin:",starttime    
+    #############################################################################
     all_stock = gen_from_begin_to_today_stock_macd_data(conf['input_base_stock_data_path'],conf['input_everyday_stock_data_path'],conf['input_everyday_stock_data_name'])
     lastday,lastday_macd_num,lastday_zhcd_num = get_today_macd_nums_and_write_to_file(all_stock,conf['output_macd_num_file_name'])
     print lastday,lastday_macd_num,lastday_zhcd_num
     # 按 date , code 排序
     output = all_stock.sort_values(by=['date','code'],ascending=True)
-    output
     # ========== 将算好的数据输出到csv文件 - 注意：这里请填写输出文件在您电脑中的路径
     # output CSV数据文件
     output.to_csv(conf['output_stock_data_cvs_file_name'],encoding='gbk', index=False)    
+    #############################################################################
+    endtime = datetime.datetime.now()
+    print "end:",endtime
+    print "use(seconds):",str((endtime - starttime).seconds)    
+    print "#############################################################################"
 
 
 # In[ ]:
 
 run(config_parms)
+
+
+# In[ ]:
+
+
+
+
+# In[ ]:
+
+
 
 
 # In[ ]:
