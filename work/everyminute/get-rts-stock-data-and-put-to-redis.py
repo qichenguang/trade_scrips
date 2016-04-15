@@ -209,8 +209,8 @@ def get_cur_day():
     cur_day = datetime.datetime.now() 
     cur_day_str = cur_day.strftime('%Y-%m-%d'); 
     cur_day_trim_str = cur_day.strftime('%Y%m%d');
-    cur_minute = cur_day.strftime('%Y-%m-%d %H:%M:%S'); 
-    return cur_day,cur_day_str,cur_day_trim_str,cur_minute
+    cur_minute_str = cur_day.strftime('%Y-%m-%d-%H-%M-%S'); 
+    return cur_day,cur_day_str,cur_day_trim_str,cur_minute_str
 
 
 # In[ ]:
@@ -230,11 +230,14 @@ def add_minute_data_to_redis(stock_price_dict,redis_host,redis_port,redis_db):
 def run(conf):
     while True:
         tm = datetime.datetime.now()
-        abeg = datetime.datetime(tm.year,tm.month,tm.day,9,30,0)
+        abeg = datetime.datetime(tm.year,tm.month,tm.day,9,30,1)
         aend = datetime.datetime(tm.year,tm.month,tm.day,11,30,0)
         bbeg = datetime.datetime(tm.year,tm.month,tm.day,13,0,0)
         bend = datetime.datetime(tm.year,tm.month,tm.day,15,0,0)
         if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
+            #
+            cur_day,cur_day_str,cur_day_trim_str,cur_minute_str = get_cur_day()
+            #
             get_ok = getTickRTSnapshot(conf['token'],outfile=conf['rts_save_file_path']);
             if get_ok:
                 all_num,left_num,stock_price_dict = load_RtsSnapshot_and_filter_invalid_stock(inputfile=conf['rts_save_file_path'])
