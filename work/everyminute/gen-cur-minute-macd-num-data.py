@@ -52,8 +52,11 @@ def write_macd_num_to_file(num1,num2,minute_file_path,minute_file_name):
         os.mkdir(output_file_dir)  
     output_file_file_name = output_file_dir + "/" + minute_file_name
     with open(output_file_file_name,'a') as handle:
-        handle.writelines(str(cur_minute) + "," + str(num1) + "," + str(num2) + "\n")
-        handle.close()
+        if int(num1) == 0 or int(num2) == 0 : 
+            pass
+        else:
+            handle.writelines(str(cur_minute) + "," + str(num1) + "," + str(num2) + "\n")
+            handle.close()
     
 
 
