@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[100]:
+# In[35]:
 
 #!/usr/bin/python
 
@@ -18,7 +18,7 @@ import zipfile
 import datetime
 
 
-# In[101]:
+# In[36]:
 
 config_parms = {
     'email_username':'13701386551@163.com',
@@ -29,7 +29,7 @@ config_parms = {
 }
 
 
-# In[102]:
+# In[37]:
 
 class POP3Email:
     user = ''
@@ -60,10 +60,13 @@ class POP3Email:
         #print numMessages
         
         #从最老的邮件开始遍历  
-        for i in range(numMessages):
+        #for i in range(numMessages):
+        #从最新的邮件开始遍历  
+        for i in range(numMessages,0,-1):
             #print "i=",i
-            m = self.M.retr(i+1)  
-            msg = email.message_from_string('\n'.join(m[1]))  
+            #m = self.M.retr(i+1)  
+            m = self.M.retr(i)
+            msg = email.message_from_string('\n'.join(m[1]))
             #allHeaders = email.Header.decode_header(msg)  
             aimHeaderStrs = {'from':'', 'to':'', 'subject':''}  
             for aimKey in aimHeaderStrs.keys():  
@@ -108,7 +111,7 @@ class POP3Email:
         return "No data. from email"
 
 
-# In[103]:
+# In[38]:
 
 def unzip_dir(zipfilename, unzipdirname):  
     fullzipfilename = os.path.abspath(zipfilename)  
@@ -132,7 +135,7 @@ def unzip_dir(zipfilename, unzipdirname):
     print "Unzip file succeed!"  
 
 
-# In[104]:
+# In[39]:
 
 def get_email_data_and_unzip(username,password,pop3_host,email_from,date_str,out_path):
     #
@@ -149,7 +152,7 @@ def get_email_data_and_unzip(username,password,pop3_host,email_from,date_str,out
         unzip_dir(zipfilename,outpath)
 
 
-# In[105]:
+# In[40]:
 
 # 得到当前时间串
 def get_cur_day():
@@ -160,7 +163,7 @@ def get_cur_day():
     return cur_day,cur_day_str,cur_day_trim_str,cur_minute
 
 
-# In[106]:
+# In[41]:
 
 def run(conf):
     starttime = datetime.datetime.now()
@@ -180,7 +183,7 @@ def run(conf):
     print "#############################################################################"
 
 
-# In[107]:
+# In[42]:
 
 run(config_parms)
 
