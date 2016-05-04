@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 from __future__ import division
 from numpy.random import randn
@@ -16,7 +16,7 @@ import sys;
 #%pwd
 
 
-# In[ ]:
+# In[2]:
 
 config_parms = {
     # input CSV 基本 stock 数据文件目录(到20151218为止)，不包括之后每天的数据文件
@@ -26,12 +26,14 @@ config_parms = {
     'input_everyday_stock_data_path' : 'E:/project/pychram/traderesp/base/input-csv/everyday-index-stock/',
     #每日的 stock CSV 数据文件名称
     'input_everyday_stock_data_name' : 'stock overview.csv',
+    #退市股票代码名称
+    'input_ts_stock_code_file_name' : 'E:/project/pychram/traderesp/base/input-csv/end-is-today-stock-ema12-ema26-macd/ts_stock.csv',
     'output_macd_num_file_name' : 'E:/project/pychram/traderesp/base/input-csv/end-is-today-stock-ema12-ema26-macd/today_stock_macd.txt',
     'output_stock_data_cvs_file_name' : 'E:/project/pychram/traderesp/base/input-csv/end-is-today-stock-ema12-ema26-macd/end-is-today-stock-ema12-ema26-macd.csv'
 }
 
 
-# In[ ]:
+# In[3]:
 
 # 得到每日的 STOCK CSV 文件名列表
 def get_every_days_stock_files(stock_everyday_csv_path,stock_everyday_csv_name):
@@ -43,7 +45,7 @@ def get_every_days_stock_files(stock_everyday_csv_path,stock_everyday_csv_name):
     return abs_filename_list
 
 
-# In[ ]:
+# In[4]:
 
 #加载每日的 STOCK CSV 文件
 def get_every_days_stock_data(stock_everyday_csv_path,stock_everyday_csv_name):
@@ -78,7 +80,7 @@ def get_every_days_stock_data(stock_everyday_csv_path,stock_everyday_csv_name):
     return all_stock
 
 
-# In[ ]:
+# In[5]:
 
 # 得到初始的 STOCK CSV 文件名列表
 def get_all_stock_code_list(stock_base_csv_path):
@@ -93,7 +95,7 @@ def get_all_stock_code_list(stock_base_csv_path):
     return stock_code_list
 
 
-# In[ ]:
+# In[6]:
 
 # 从每日数据中得到新的 STOCK 数据(去除掉昨天之前已经有的)
 def get_new_stock(every_days_stock,stock_code_list):
@@ -104,7 +106,7 @@ def get_new_stock(every_days_stock,stock_code_list):
     return new_stock_data
 
 
-# In[ ]:
+# In[7]:
 
 # 计算新 STOCK 的 macd 数据
 def gen_new_stock_macd_data(new_stock_data):
@@ -130,10 +132,10 @@ def gen_new_stock_macd_data(new_stock_data):
     return all_new_stock
 
 
-# In[ ]:
+# In[8]:
 
 # 计算 STOCK 的 macd 数据，包括新的和旧的
-def gen_from_begin_to_today_stock_macd_data(stock_base_csv_path,stock_everyday_csv_path,stock_everyday_csv_name):
+def gen_from_begin_to_today_stock_macd_data(stock_base_csv_path,ts_stock_code_file_name,stock_everyday_csv_path,stock_everyday_csv_name):
     #加载每天的数据
     every_days_stock = get_every_days_stock_data(stock_everyday_csv_path,stock_everyday_csv_name)
     #old stock code list
@@ -183,11 +185,14 @@ def gen_from_begin_to_today_stock_macd_data(stock_base_csv_path,stock_everyday_c
     #
     # 将 新股票的合并到output中
     all_stock = all_stock.append(all_new_stock, ignore_index=True)
-    #
+    # 去除已经退市的股票
+    ts_stock_code = pd.read_csv(ts_stock_code_file_name,names=['code'],dtype={'code':str})
+    all_stock = all_stock[all_stock['code'].isin(ts_stock_code['code']) == False]
+    
     return all_stock
 
 
-# In[ ]:
+# In[12]:
 
 # 得到最后一天的 MACD 数量
 def get_today_macd_nums_and_write_to_file(all_stock,macd_num_file_name):
@@ -195,7 +200,8 @@ def get_today_macd_nums_and_write_to_file(all_stock,macd_num_file_name):
     #cur_day_str = cur_day.strftime('%Y-%m-%d'); 
     #today_stock = all_stock[all_stock['date'] == cur_day_str]
     lastday = all_stock['date'].max()
-    lastday_stock = all_stock[all_stock['date'] == lastday]
+    #lastday_stock = all_stock[all_stock['date'] == lastday]
+    lastday_stock = all_stock
     
     lastday_macd_num = lastday_stock[lastday_stock['macd_macd'] > 0.0].count()['code']
     lastday_zhcd_num = lastday_stock[(lastday_stock['macd_dif'] > 0.0) & (lastday_stock['macd_dea'] > 0.0) & (lastday_stock['macd_macd'] > 0.0)].count()['code']
@@ -206,13 +212,13 @@ def get_today_macd_nums_and_write_to_file(all_stock,macd_num_file_name):
     return lastday,lastday_macd_num,lastday_zhcd_num
 
 
-# In[ ]:
+# In[13]:
 
 def run(conf):
     starttime = datetime.datetime.now()
     print "begin:",starttime    
     #############################################################################
-    all_stock = gen_from_begin_to_today_stock_macd_data(conf['input_base_stock_data_path'],conf['input_everyday_stock_data_path'],conf['input_everyday_stock_data_name'])
+    all_stock = gen_from_begin_to_today_stock_macd_data(conf['input_base_stock_data_path'],conf['input_ts_stock_code_file_name'],conf['input_everyday_stock_data_path'],conf['input_everyday_stock_data_name'])
     lastday,lastday_macd_num,lastday_zhcd_num = get_today_macd_nums_and_write_to_file(all_stock,conf['output_macd_num_file_name'])
     print lastday,lastday_macd_num,lastday_zhcd_num
     # 按 date , code 排序
@@ -227,19 +233,9 @@ def run(conf):
     print "#############################################################################"
 
 
-# In[ ]:
+# In[14]:
 
 run(config_parms)
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
 
 
 # In[ ]:
