@@ -16,6 +16,7 @@ np.set_printoptions(precision=4)
 import sys; 
 import easyquotation
 import traceback
+import easyquotation.helpers as helpers
 
 
 # In[ ]:
@@ -31,16 +32,51 @@ config_parms = {
 
 # In[ ]:
 
+def get_left_stock_data(first_stock_rows,quotation):
+    all_stock_codes = helpers.get_stock_codes(realtime=True)
+    code_series = Series(all_stock_codes,index=all_stock_codes)
+    left_code = code_series[code_series.index.isin(first_stock_rows.index) == False]
+    need_code = []
+    for id in left_code:
+        code = str(id)
+        #print (code)
+        if len(code) == 6 and (int(code[0]) == 6 or (code[0]) == "0" or int(code[0]) == 3):
+            pass
+        else:
+            #print (code)
+            continue 
+
+        if int(code[0:3]) == 399 :
+            #print (code)
+            continue
+        #
+        need_code.append(code)
+    #
+    need_code_ret = quotation.stocks(need_code)
+    ret_left = [ code for code in need_code if code not in need_code_ret ]
+    
+    need_stock_pd = pd.DataFrame(need_code_ret)
+    need_stock_rows = need_stock_pd.T 
+    return need_stock_rows,ret_left
+
+
+# In[ ]:
+
 def get_easyquotation_stock_data(source='sina'):
     try:
         #
         quotation = easyquotation.use(source) # 新浪 ['sina'] 腾讯 ['tencent', 'qq']
         #
-        all_stock_array = quotation.all
-        all_stock_pd = pd.DataFrame(all_stock_array)
-        all_stock_rows = all_stock_pd.T 
+        first_stock_array = quotation.all
+        first_stock_pd = pd.DataFrame(first_stock_array)
+        first_stock_rows = first_stock_pd.T 
+        #
+        need_stock_rows,ret_left = get_left_stock_data(first_stock_rows,quotation)
+        #
+        all_stock_rows = first_stock_rows.append(need_stock_rows)
+        #
         all_price = all_stock_rows[['now']]
-        
+        #
         stock_price_dict = {}
         all_num = 0
         left_num = 0
@@ -60,15 +96,16 @@ def get_easyquotation_stock_data(source='sina'):
             # 停牌
             if float(row['now']) < 0.1:
                 #print (" < 0.1 error:", code,row['now'])
-                continue            
+                #continue            
+                pass
 
             #print row
             left_num += 1
             stock_price_dict[str(id)] = int(row['now'] * 10000.0)
-        return all_num,left_num,stock_price_dict
+        return all_num,left_num,ret_left,stock_price_dict,all_stock_rows
     except Exception:
         traceback.print_exc()
-    return (False,False,None)
+    return (False,False,False,None,None)
 
 
 # In[ ]:
@@ -104,11 +141,12 @@ def run(conf):
         bbeg = datetime.datetime(tm.year,tm.month,tm.day,13,0,0)
         bend = datetime.datetime(tm.year,tm.month,tm.day,15,0,0)
         if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
+        #if(True):
             #
             cur_day,cur_day_str,cur_day_trim_str,cur_minute_str = get_cur_day()
             #
-            all_num,left_num,stock_price_dict = get_easyquotation_stock_data(conf['data_source'])
-            print (all_num,left_num)
+            all_num,left_num,ret_left,stock_price_dict,all_stock_rows = get_easyquotation_stock_data(conf['data_source'])
+            print (all_num,left_num,ret_left)
             if all_num:
                 result = add_minute_data_to_redis(stock_price_dict,conf['redis_host'],conf['redis_port'],conf['redis_db']);
                 print (tm,",add_minute_data_to_redis(), set redis:",result)
