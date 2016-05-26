@@ -227,7 +227,7 @@ def calc_macd_data(minute_data):
         #
         num=num+1
         if num > 10:
-            break
+            #break
             pass
     #
     cur_macd_num = macd_stock[macd_stock['macd'] > 0.0].count()['code']
