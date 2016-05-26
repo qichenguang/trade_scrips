@@ -20,7 +20,6 @@ import sys;
 # In[ ]:
 
 config_parms = {
-    'input_stock_macd_data_file_name' : 'E:/project/pychram/traderesp/base/input-csv/end-is-today-stock-ema12-ema26-macd/end-is-today-stock-ema12-ema26-macd.csv',
     'minute_file_path' : 'E:/project/pychram/traderesp/base/output-csv/work/everyday/',
     'minute_file_name' : 'minute.txt',
     'redis_host' : 'localhost',
@@ -76,7 +75,7 @@ def get_every_days_stock_data(stock_everyday_csv_path,stock_everyday_csv_name):
         if i>= 5:
             #break
             pass
-        #print file_name
+        print (i,file_name)
         # 从csv文件中读取该股票数据 
         # 注意：这里请填写数据文件在您电脑中的路径
         stock_data = pd.read_csv(file_name,
@@ -127,7 +126,7 @@ def get_from_begin_to_today_stock(stock_base_csv_path):
         if i>= 5:
             #break
             pass
-        #print code
+        print (i,code)
         # 从csv文件中读取该股票数据 
         # 注意：这里请填写数据文件在您电脑中的路径
         stock_data = pd.read_csv(stock_base_csv_path + code + '.csv',
@@ -259,7 +258,7 @@ def write_macd_num_to_file(num1,num2,minute_file_path,minute_file_name):
 def run(conf):
     while True:
         tm = datetime.datetime.now()
-        abeg = datetime.datetime(tm.year,tm.month,tm.day,9,30,0)
+        abeg = datetime.datetime(tm.year,tm.month,tm.day,8,30,0)
         aend = datetime.datetime(tm.year,tm.month,tm.day,11,30,0)
         bbeg = datetime.datetime(tm.year,tm.month,tm.day,13,0,0)
         bend = datetime.datetime(tm.year,tm.month,tm.day,15,0,0)
