@@ -34,6 +34,10 @@ config_parms = {
     'input_everyday_stock_data_name' : 'stock overview.csv',
     #退市股票代码名称
     'input_ts_stock_code_file_name' : 'E:/project/pychram/traderesp/base/input-csv/end-is-today-stock-ema12-ema26-macd/ts_stock.csv',
+    # Base One file name
+    'output_global_base_stock_data_onefile_name':'E:/onefile_global_all_base_stock.csv',
+    # Every One file name
+    'output_everyday_stock_data_onefile_name':'E:/onefile_all_everyday_stock.csv',
 }
 
 
@@ -147,34 +151,40 @@ def get_from_begin_to_today_stock(stock_base_csv_path):
 
 # In[ ]:
 
-def get_all_disk_stock_data(stock_base_csv_path,stock_everyday_csv_path,stock_everyday_csv_name,ts_stock_code_file_name):
-    global G_ALL_STOCK
+# only global init use.
+def get_all_base_stock_data_to_one_file(stock_base_csv_path,out_file):
     #
     base_stock = get_from_begin_to_today_stock(stock_base_csv_path)
-    everyday_stock = get_every_days_stock_data(stock_everyday_csv_path,stock_everyday_csv_name)
+    base_stock.to_csv(out_file)
+    return True
+
+
+# In[ ]:
+
+# only everyday first run use.
+def get_one_file_base_stock_and_everyday_data_and_save_to_onefile(base_onefile,out_onefile,
+                                                                 stock_everyday_csv_path,stock_everyday_csv_name,
+                                                                 ts_stock_code_file_name):
     #
-    G_ALL_STOCK = G_ALL_STOCK.append(base_stock,ignore_index=True)
+    global G_ALL_STOCK
+    #
+    everyday_stock = get_every_days_stock_data(stock_everyday_csv_path,stock_everyday_csv_name)
+    base_stock = pd.read_csv(base_onefile,encoding='gbk',converters={'code':str},dtype={'code':str},usecols=['code','date','close'])
+    #
     G_ALL_STOCK = G_ALL_STOCK.append(everyday_stock,ignore_index=True)
+    G_ALL_STOCK = G_ALL_STOCK.append(base_stock,ignore_index=True)
+    
     # 去除已经退市的股票
     ts_stock_code = pd.read_csv(ts_stock_code_file_name,names=['code'],dtype={'code':str})
     G_ALL_STOCK = G_ALL_STOCK[G_ALL_STOCK['code'].isin(ts_stock_code['code']) == False]
-    return True
-
-
-# In[ ]:
-
-def get_all_stock_data_from_one_file(file_name):
-    global G_ALL_STOCK
-    G_ALL_STOCK = pd.read_csv(file_name,encoding='gbk',converters={'code':str},dtype={'code':str},usecols=['code','date','close'])
     #
-    cur_day,cur_day_str,cur_day_trim_str,cur_minute = get_cur_day()
-    G_DAY_STR = cur_day_str
+    G_ALL_STOCK.to_csv(out_onefile)
     return True
 
 
 # In[ ]:
 
-def get_cur_pd_stock(stock_base_csv_path,stock_everyday_csv_path,stock_everyday_csv_name,ts_stock_code_file_name):
+def get_today_pd_stock(base_onefile,out_onefile,stock_everyday_csv_path,stock_everyday_csv_name,ts_stock_code_file_name):
     global G_ALL_STOCK
     global G_DAY_STR
     #
@@ -185,7 +195,10 @@ def get_cur_pd_stock(stock_base_csv_path,stock_everyday_csv_path,stock_everyday_
         G_DAY_STR = cur_day_str
         #
         print ("begin:",cur_minute)
-        get_all_disk_stock_data(stock_base_csv_path,stock_everyday_csv_path,stock_everyday_csv_name,ts_stock_code_file_name)
+        get_one_file_base_stock_and_everyday_data_and_save_to_onefile(base_onefile,
+                                                                      out_onefile,
+                                                                      stock_everyday_csv_path,stock_everyday_csv_name,
+                                                                      ts_stock_code_file_name)
         #
         cur_day,cur_day_str,cur_day_trim_str,cur_minute = get_cur_day()
         print ("end:",cur_minute)
@@ -265,37 +278,45 @@ def write_macd_num_to_file(num1,num2,minute_file_path,minute_file_name):
 
 # In[ ]:
 
+def reload_today_onefile_stock_data_for_debug(file_name):
+    global G_ALL_STOCK
+    G_ALL_STOCK = pd.read_csv(file_name,encoding='gbk',converters={'code':str},dtype={'code':str},usecols=['code','date','close'])
+    #
+    cur_day,cur_day_str,cur_day_trim_str,cur_minute = get_cur_day()
+    G_DAY_STR = cur_day_str
+    return True
+#reload_today_onefile_stock_data_for_debug(config_parms['output_everyday_stock_data_onefile_name'])
+
+
+# In[ ]:
+
+# only global run once. if onefile base lost, then run it
+#get_all_base_stock_data_to_one_file(config_parms["input_base_stock_data_path"],config_parms["output_global_base_stock_data_onefile_name"])
+
+
+# In[ ]:
+
 def run(conf):
-    save_to_one_file = True
-    load_from_one_file = False
     while True:
         tm = datetime.datetime.now()
         abeg = datetime.datetime(tm.year,tm.month,tm.day,8,30,0)
         aend = datetime.datetime(tm.year,tm.month,tm.day,11,30,0)
         bbeg = datetime.datetime(tm.year,tm.month,tm.day,13,0,0)
         bend = datetime.datetime(tm.year,tm.month,tm.day,15,0,0)
-        if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
-        #if (True):
-            if (load_from_one_file == True):
-                get_all_stock_data_from_one_file("E:/fileout.csv")
-                load_from_one_file = False
-            else:
-                ret_str = get_cur_pd_stock(conf['input_base_stock_data_path'],
-                           conf['input_everyday_stock_data_path'],
-                           conf['input_everyday_stock_data_name'],
-                           conf['input_ts_stock_code_file_name'])
-                print (ret_str)
-                if (save_to_one_file == True):
-                    G_ALL_STOCK.to_csv("E:/fileout.csv")
-                    save_to_one_file = False
-                    
+        #if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
+        if (True):
+            ret_str = get_today_pd_stock(conf['output_global_base_stock_data_onefile_name'],
+                       conf['output_everyday_stock_data_onefile_name'],               
+                       conf['input_everyday_stock_data_path'],
+                       conf['input_everyday_stock_data_name'],
+                       conf['input_ts_stock_code_file_name'])
+            print (ret_str)
 
             tm = datetime.datetime.now()
             minute_data = load_minute_data_from_redis(conf['redis_host'],conf['redis_port'],conf['redis_db']);
             cur_diff_num,cur_dea_num = calc_macd_data(minute_data)
             print (tm,cur_diff_num,cur_dea_num)
             write_macd_num_to_file( cur_diff_num,cur_dea_num,conf['minute_file_path'],conf['minute_file_name'])
-            
         else:
             print (tm,"market closed.")
         time.sleep(60)
@@ -310,11 +331,6 @@ G_DAY_STR = ""
 # In[ ]:
 
 run(config_parms)
-
-
-# In[ ]:
-
-
 
 
 # In[ ]:
