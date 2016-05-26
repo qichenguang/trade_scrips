@@ -263,8 +263,8 @@ def run(conf):
         aend = datetime.datetime(tm.year,tm.month,tm.day,11,30,0)
         bbeg = datetime.datetime(tm.year,tm.month,tm.day,13,0,0)
         bend = datetime.datetime(tm.year,tm.month,tm.day,15,0,0)
-        #if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
-        if (True):
+        if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
+        #if (True):
             ret_str = get_cur_pd_stock(conf['input_base_stock_data_path'],
                            conf['input_everyday_stock_data_path'],
                            conf['input_everyday_stock_data_name'],
