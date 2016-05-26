@@ -158,7 +158,17 @@ def get_all_disk_stock_data(stock_base_csv_path,stock_everyday_csv_path,stock_ev
     # 去除已经退市的股票
     ts_stock_code = pd.read_csv(ts_stock_code_file_name,names=['code'],dtype={'code':str})
     G_ALL_STOCK = G_ALL_STOCK[G_ALL_STOCK['code'].isin(ts_stock_code['code']) == False]
+    return True
+
+
+# In[ ]:
+
+def get_all_stock_data_from_one_file(file_name):
+    global G_ALL_STOCK
+    G_ALL_STOCK = pd.read_csv(file_name,encoding='gbk',converters={'code':str},dtype={'code':str},usecols=['code','date','close'])
     #
+    cur_day,cur_day_str,cur_day_trim_str,cur_minute = get_cur_day()
+    G_DAY_STR = cur_day_str
     return True
 
 
@@ -256,6 +266,8 @@ def write_macd_num_to_file(num1,num2,minute_file_path,minute_file_name):
 # In[ ]:
 
 def run(conf):
+    save_to_one_file = True
+    load_from_one_file = False
     while True:
         tm = datetime.datetime.now()
         abeg = datetime.datetime(tm.year,tm.month,tm.day,8,30,0)
@@ -264,11 +276,21 @@ def run(conf):
         bend = datetime.datetime(tm.year,tm.month,tm.day,15,0,0)
         if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
         #if (True):
-            ret_str = get_cur_pd_stock(conf['input_base_stock_data_path'],
+            if (load_from_one_file == True):
+                get_all_stock_data_from_one_file("E:/fileout.csv")
+                load_from_one_file = False
+            else:
+                ret_str = get_cur_pd_stock(conf['input_base_stock_data_path'],
                            conf['input_everyday_stock_data_path'],
                            conf['input_everyday_stock_data_name'],
                            conf['input_ts_stock_code_file_name'])
-            print (ret_str)
+                print (ret_str)
+                if (save_to_one_file == True):
+                    G_ALL_STOCK.to_csv("E:/fileout.csv")
+                    save_to_one_file = False
+                    
+
+            tm = datetime.datetime.now()
             minute_data = load_minute_data_from_redis(conf['redis_host'],conf['redis_port'],conf['redis_db']);
             cur_diff_num,cur_dea_num = calc_macd_data(minute_data)
             print (tm,cur_diff_num,cur_dea_num)
