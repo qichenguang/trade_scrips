@@ -171,8 +171,7 @@ def get_one_file_base_stock_and_everyday_data_and_save_to_onefile(base_onefile,o
     everyday_stock = get_every_days_stock_data(stock_everyday_csv_path,stock_everyday_csv_name)
     base_stock = pd.read_csv(base_onefile,encoding='gbk',converters={'code':str},dtype={'code':str},usecols=['code','date','close'])
     #
-    G_ALL_STOCK = G_ALL_STOCK.append(everyday_stock,ignore_index=True)
-    G_ALL_STOCK = G_ALL_STOCK.append(base_stock,ignore_index=True)
+    G_ALL_STOCK = everyday_stock.append(base_stock,ignore_index=True)
     
     # 去除已经退市的股票
     ts_stock_code = pd.read_csv(ts_stock_code_file_name,names=['code'],dtype={'code':str})
@@ -232,9 +231,9 @@ def calc_macd_data(minute_data):
     now_stock = G_ALL_STOCK.append(minute_data,ignore_index=True)
     macd_stock =  pd.DataFrame()
     num=0
-    for code,stock_data in now_stock.groupby('code'):
+    for code,grouped in now_stock.groupby('code'):
         #排序
-        stock_data.sort_values(by='date', ascending=True,inplace=True)
+        stock_data = grouped.sort_values(by='date', ascending=True,inplace=False)
         #
         close = stock_data['close']
         ema_12 = close.ewm(span=12).mean()
@@ -254,7 +253,7 @@ def calc_macd_data(minute_data):
     #
     cur_macd_num = macd_stock[macd_stock['macd'] > 0.0].count()['code']
     cur_zhcd_num = macd_stock[(macd_stock['diff'] > 0.0) & (macd_stock['dea'] > 0.0) & (macd_stock['macd'] > 0.0)].count()['code']
-    return cur_macd_num,cur_zhcd_num
+    return cur_macd_num,cur_zhcd_num,macd_stock
 
 
 # In[ ]:
@@ -285,6 +284,29 @@ def reload_today_onefile_stock_data_for_debug(file_name):
     cur_day,cur_day_str,cur_day_trim_str,cur_minute = get_cur_day()
     G_DAY_STR = cur_day_str
     return True
+
+
+# In[ ]:
+
+def check_stock_cur_macd_for_debug(code='300342',date='2016-05-27',close=27.52):
+    global G_ALL_STOCK
+    judge = G_ALL_STOCK[G_ALL_STOCK['code']==code].sort_values(by='date', ascending=True,inplace=False)
+    judge_1 = judge.append(pd.Series({'code':code,'date':date,'close':close}),ignore_index=True)
+    close = judge_1['close']
+    ema_12 = close.ewm(span=12).mean()
+    ema_26 = close.ewm(span=26).mean()
+    diff = ema_12 - ema_26
+    dea = diff.ewm(span=9).mean()
+    macd = 2*(diff - dea)
+    judge_1['diff'] = diff
+    judge_1['dea'] = dea
+    judge_1['macd'] = macd
+    return judge_1
+
+
+# In[ ]:
+
+# only debug use
 #reload_today_onefile_stock_data_for_debug(config_parms['output_everyday_stock_data_onefile_name'])
 
 
@@ -296,15 +318,21 @@ def reload_today_onefile_stock_data_for_debug(file_name):
 
 # In[ ]:
 
+#300342
+#judge_ret = check_stock_cur_macd_for_debug(code='300342',date='2016-05-27',close=27.52)
+
+
+# In[ ]:
+
 def run(conf):
     while True:
         tm = datetime.datetime.now()
-        abeg = datetime.datetime(tm.year,tm.month,tm.day,8,30,0)
+        abeg = datetime.datetime(tm.year,tm.month,tm.day,9,20,0)
         aend = datetime.datetime(tm.year,tm.month,tm.day,11,30,0)
         bbeg = datetime.datetime(tm.year,tm.month,tm.day,13,0,0)
         bend = datetime.datetime(tm.year,tm.month,tm.day,15,0,0)
-        #if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
-        if (True):
+        if (tm > abeg and tm < aend) or (tm > bbeg and tm < bend) :
+        #if (True):
             ret_str = get_today_pd_stock(conf['output_global_base_stock_data_onefile_name'],
                        conf['output_everyday_stock_data_onefile_name'],               
                        conf['input_everyday_stock_data_path'],
@@ -314,7 +342,7 @@ def run(conf):
 
             tm = datetime.datetime.now()
             minute_data = load_minute_data_from_redis(conf['redis_host'],conf['redis_port'],conf['redis_db']);
-            cur_diff_num,cur_dea_num = calc_macd_data(minute_data)
+            cur_diff_num,cur_dea_num,macd_stock = calc_macd_data(minute_data)
             print (tm,cur_diff_num,cur_dea_num)
             write_macd_num_to_file( cur_diff_num,cur_dea_num,conf['minute_file_path'],conf['minute_file_name'])
         else:
@@ -331,6 +359,11 @@ G_DAY_STR = ""
 # In[ ]:
 
 run(config_parms)
+
+
+# In[ ]:
+
+
 
 
 # In[ ]:
